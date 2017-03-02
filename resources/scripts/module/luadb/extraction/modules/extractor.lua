@@ -7,6 +7,8 @@ local hypergraph = require "luadb.hypergraph"
 local utils      = require "luadb.utils"
 local ast        = require "luadb.ast"
 local logger     = utils.logger
+local debug      = require "dbg2"
+
 
 local function getModuleNodeByModulePath(nodes, modulePath)
   for i,mod in pairs(nodes) do

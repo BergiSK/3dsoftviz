@@ -1352,6 +1352,7 @@ void CoreWindow::createGraphSlider()
 
 void CoreWindow::createSelectionComboBox()
 {
+	delete selectionTypeComboBox;
 	selectionTypeComboBox = new QComboBox();
 	selectionTypeComboBox->insertItems( 0, ( QStringList() << "All" << "Node" << "Edge" << "Cluster" ) );
 	selectionTypeComboBox->setFocusPolicy( Qt::NoFocus );
@@ -1772,6 +1773,7 @@ void CoreWindow::loadSpecialMatrixFromFile()
 	coreGraph->setEdgeVisualForType( Data::Edge::INDEX_CURVE2, "iEdgeType" );
 	//axisEdgeType, iEdgeType
 	//axisNodeType, eNodeType, iFullNodeType, iHalfNodeType, nNodeType
+	delete matrixViewer;
 }
 
 void CoreWindow::saveLayoutToDB()
@@ -2200,6 +2202,46 @@ void CoreWindow::loadExampleGraphLua()
 	//reprezentacie na default
 	nodeTypeComboBoxChanged( nodeTypeComboBox->currentIndex() );
 	edgeTypeComboBoxChanged( edgeTypeComboBox->currentIndex() );
+	delete visualizer;
+}
+
+void CoreWindow::loadExampleModuleGraph()
+{
+	QString file = "../lib/lua/leg";
+	Lua::LuaInterface* lua = Lua::LuaInterface::getInstance();
+
+	Lua::LuaValueList path;
+	path.push_back( file.toStdString() );
+	QString createGraph[] = {"module_graph", "extractGraph"};
+	lua->callFunction( 2, createGraph, path.getValue() );
+	lua->doString( "getGraph = module_graph.getGraph" );
+	Lua::LuaInterface::getInstance()->doString( "getFullGraph = getGraph" );
+
+	Data::Graph* currentGraph = Manager::GraphManager::getInstance()->getActiveGraph();
+
+	//zavriem aktualny graf
+	if ( currentGraph != NULL ) {
+		Manager::GraphManager::getInstance()->closeGraph( currentGraph );
+	}
+
+	//vytvorim novy graf
+	currentGraph = Manager::GraphManager::getInstance()->createNewGraph( "LuaModuleGraph" );
+
+	//zastav rozmiestnovaci algoritmus
+	layout->pause();
+	coreGraph->setNodesFreezed( true );
+
+	//vizualizuj nacitany lua graf
+	Lua::LuaGraphVisualizer* visualizer = new Lua::ModuleGraphVisualizer( currentGraph, coreGraph->getCamera() );
+	visualizer->visualize();
+
+	//spusti rozmiestnovaci algoritmus
+	coreGraph->reloadConfig();
+	if ( isPlaying ) {
+		layout->play();
+		coreGraph->setNodesFreezed( false );
+	}
+
 }
 
 void CoreWindow::loadExampleModuleGraph()
@@ -3480,6 +3522,7 @@ void CoreWindow::setRestriction_RadialLayout()
 	Layout::RadialLayout* radialLayout = new Layout::RadialLayout( currentGraph, selectedNodes, 100, rootNode, rootPosition );
 	radialLayout->select();
 	viewerWidget->getCameraManipulator()->setCenter( rootPosition );
+	delete radialLayout;
 }
 /*Volovar koniec
  */
@@ -3603,7 +3646,7 @@ bool CoreWindow::add_NodeClick()
 	if ( isPlaying ) {
 		layout->play();
 	}
-
+	delete operations;
 	return true;
 }
 
@@ -4694,6 +4737,7 @@ void CoreWindow::loadFunctionCall()
 		layout->play();
 		coreGraph->setNodesFreezed( false );
 	}
+	delete visualizer;
 }
 
 void CoreWindow::filterGraph()
@@ -5199,7 +5243,7 @@ void CoreWindow::createEvolutionLuaGraph()
 
 	Lua::LuaGraphVisualizer* visualizer = new Lua::GitGraphVisualizer( currentGraph, coreGraph->getCamera() );
 	visualizer->visualize();
-
+	delete visualizer;
 
 
 	/*
@@ -5321,6 +5365,7 @@ void CoreWindow::createEvolutionLuaGraph()
 		coreGraph->setNodesFreezed( false );
 	}
 	*/
+
 }
 
 //jurik
